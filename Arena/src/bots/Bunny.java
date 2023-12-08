@@ -17,6 +17,7 @@ public class Bunny extends Bot{
 	private int moveCount = 99;
 	private int msgCounter = 0;
 	private int move = BattleBotArena.RIGHT;
+
 	private int playstyle = 0;
 
 	/**
@@ -45,96 +46,106 @@ public class Bunny extends Bot{
 
 	BotInfo[] liveBots;
 	BotInfo[] allyBots = new BotInfo[4];
+	BotInfo[] deadBots;
+	BotInfo me;
 
-    public int getMove(BotInfo me, boolean shotOK, BotInfo[] alive, BotInfo[] deadBots, Bullet[] bullets){
+    public int getMove(BotInfo myself, boolean shotOK, BotInfo[] alive, BotInfo[] dead, Bullet[] bullets){
 		liveBots = alive;
+		me = myself;
+		deadBots = dead;
 
 		// for overheating
-		if (overheat){try{Thread.sleep(sleep);}catch (Exception e){}}
+		//if (overheat){try{Thread.sleep(sleep);}catch (Exception e){}}
 
-		// increase the move counter
-		moveCount++;
+		//play closest robot
+		if(playstyle % 2 == 0){
 
-		// Is it time to send a message?
-		if (--msgCounter == 0)
-		{
-			move = BattleBotArena.SEND_MESSAGE;
-			moveCount = 99;
 		}
-		// Time to choose a new move?
-		else if (moveCount >= 30+(int)Math.random()*60)
-		{
-			moveCount = 0;
-			int choice = (int)(Math.random()*8);
-			if (choice == 0)
-			{
-				move = BattleBotArena.UP;
-				current=up;
-			}
-			else if (choice == 1)
-			{
-				move = BattleBotArena.DOWN;
-				current=down;
-			}
-			else if (choice == 2)
-			{
-				move = BattleBotArena.LEFT;
-				current=left;
-			}
-			else if (choice == 3)
-			{
-				move = BattleBotArena.RIGHT;
-				current=right;
-			}
-			else if (choice == 4)
-			{
-				move = BattleBotArena.FIREUP;
-				moveCount = 99; // make sure we choose a new move next time
-				current=up;
-			}
-			else if (choice == 5)
-			{
-				move = BattleBotArena.FIREDOWN;
-				moveCount = 99; // make sure we choose a new move next time
-				current=down;
-			}
-			else if (choice == 6)
-			{
-				move = BattleBotArena.FIRELEFT;
-				moveCount = 99; // make sure we choose a new move next time
-				current=left;
-			}
-			else if (choice == 7)
-			{
-				move = BattleBotArena.FIRERIGHT;
-				moveCount = 99; // make sure we choose a new move next time
-				current=right;
-			}
+		//play lowest score
+		else{
+
 		}
-		return move;
+
+		if(tombstoneObstacle() == 2 || tombstoneObstacle() == 4){
+			return BattleBotArena.UP;
+		}else if(tombstoneObstacle() == 1 || tombstoneObstacle() == 3){
+			return BattleBotArena.LEFT;
+		}
+
+
+		return BattleBotArena.RIGHT;
 	}
 
+	// Lucas
 	public void setAlly(){
 		int allyNumber=0;
 		for(int i = 0; i < liveBots.length; i++){
 			if(liveBots[i].getTeamName().equals(getTeamName())){
 				allyBots[allyNumber] = liveBots[i];
-				System.out.println(allyBots[allyNumber].getName());
 				allyNumber++;
 			}
 		}
+
+		// bot 0 and 2 will play for closest enemy
+		// bot 1 and 3 will play for lowest score enemy
+		for(int i = 0; i < 3; i++){
+			if(me.getBotNumber() > allyBots[i].getBotNumber()){
+				playstyle++;
+			}
+		}
+	}
+	// Faraz
+	public void getAlly()
+	{
+		for(int i=0; i < allyBots.length; i++)
+		{
+			System.out.println(allyBots[i]);
+		}
+	}
+	// Lucas
+	public int tombstoneObstacle(){
+		//0 no stone
+		//1 to the left
+		//2 up
+		//3 to the right
+		//4 down
+		BotInfo tombstone = closestTomb();
+		double hypotenuse = Math.sqrt((me.getX() - tombstone.getX())*(me.getX() - tombstone.getX())) + ((me.getY() - tombstone.getY()) * (me.getY() - tombstone.getY()));
+		double distanceX = Math.abs(me.getX() - tombstone.getX());
+		double distanceY = Math.abs(me.getY() - tombstone.getY());
+
+		if(hypotenuse < 100){
+			if(distanceX < distanceY){
+				if(me.getX() < tombstone.getX()){
+					return 3;
+				}else{
+					return 1;
+				}
+			}else{
+				if(me.getY() < tombstone.getY()){
+					return 4;
+				}else{
+					return 2;
+				}
+			}
+		}
+		return 0;
 	}
 
-	public void setTeam(){
-		allyBots[0].getX();
-		allyBots[0].getY();
-		allyBots[1].getX();
-		allyBots[1].getY();
-		allyBots[2].getX();
-		allyBots[2].getY();
-		allyBots[3].getX();
-		allyBots[3].getY();
+	public BotInfo closestTomb(){
+		BotInfo closestStone = null;
+		double hypotenuse;
+		double smallestHypotenuse =1000;
+		for(int i = 0; i < deadBots.length; i++ ){
+			hypotenuse = Math.sqrt((me.getX() - deadBots[i].getX())*(me.getX() - deadBots[i].getX())) + ((me.getY() - deadBots[i].getY()) * (me.getY() - deadBots[i].getY()));
+			if(hypotenuse <= smallestHypotenuse){
+				smallestHypotenuse = hypotenuse;
+				closestStone = deadBots[i];
+			}
+		}
+		return closestStone;
 	}
+
 
 	/* public void trackBullet(BotInfo me, Bullet[] bullets){
 		double hypotenuse = 1000;
@@ -156,7 +167,8 @@ public class Bunny extends Bot{
 	 */
 	public void newRound()
 	{
-		current = up;
+		setAlly();
+		current = right;
 	}
 
 	/**
