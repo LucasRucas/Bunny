@@ -22,13 +22,15 @@ public class TestBunny {
 		BotInfo me4 = new BotInfo(200, 300, 0, "7");
 		
 		BotInfo[] liveBots = new BotInfo[5];
-		BotInfo info = new BotInfo(400, 200, 0, "enemy");
+		Bullet[] bullets = new Bullet[0];
+		BotInfo[] deadBots = new BotInfo[1];
+		BotInfo info = new BotInfo(100, 200, 0, "enemy");
 		Bunny bunny1 = new Bunny();
 		Bunny bunny2 = new Bunny();
 		Bunny bunny3 = new Bunny();
 		Bunny bunny4 = new Bunny();
 		System.out.println();
-		liveBots[0] = info;
+		deadBots[0] = info;
 		liveBots[1] = me1;
 		liveBots[2] = me2;
 		liveBots[3] = me3;
@@ -36,23 +38,26 @@ public class TestBunny {
 
 		
 		
-		BotInfo[] deadBots = new BotInfo[0];
 		
 		//setting bunny bot teams to use for testing
-		Bullet[] bullets = new Bullet[0];
 		me1.setTeamName(bunny1.getTeamName());
 		me2.setTeamName(bunny2.getTeamName());
 		me3.setTeamName(bunny3.getTeamName());
 		me4.setTeamName(bunny4.getTeamName());
-		bunny1.getMove(me1, true, liveBots, deadBots, bullets);
-		bunny2.getMove(me2, true, liveBots, deadBots, bullets);
-		bunny3.getMove(me3, true, liveBots, deadBots, bullets);
-		bunny4.getMove(me4, true, liveBots, deadBots, bullets);
-		System.out.println(bunny1.getTeamName());
+		//bunny1.getMove(me1, true, liveBots, deadBots, bullets);
+		//bunny2.getMove(me2, true, liveBots, deadBots, bullets);
+		//bunny3.getMove(me3, true, liveBots, deadBots, bullets);
+		//bunny4.getMove(me4, true, liveBots, deadBots, bullets);
+		//System.out.println(bunny1.getTeamName());
 		//finds out which bot is an ally
-		bunny1.setAlly();
+		//bunny1.setAlly();
 		//prints out all of the ally bots
-		bunny1.getAlly();
+		//bunny1.getAlly();
+
+		if(bunny1.getMove(me1, true, liveBots, deadBots, bullets) == BattleBotArena.UP){
+			System.out.println("OK");
+		}else{
+			System.out.println("problem");
+		}
 	}
-	
 }
