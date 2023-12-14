@@ -50,11 +50,11 @@ public class CloseBot extends Bot {
 		for (BotInfo bot : liveBots)
 		{
 			if (bot.getX() == me.getX() && me.getY()-100 == bot.getY() ) {
-				return BattleBotArena.FIREUP;
+				return BattleBotArena.DOWN;
 			}
 		}
 		
-		return BattleBotArena.STAY;
+		return BattleBotArena.DOWN;
 	}
 
 	/**
