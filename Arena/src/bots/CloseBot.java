@@ -47,13 +47,6 @@ public class CloseBot extends Bot {
 	 */
 	public int getMove(BotInfo me, boolean shotOK, BotInfo[] liveBots, BotInfo[] deadBots, Bullet[] bullets)
 	{
-		for (BotInfo bot : liveBots)
-		{
-			if (bot.getX() == me.getX() && me.getY()-100 == bot.getY() ) {
-				return BattleBotArena.DOWN;
-			}
-		}
-		
 		return BattleBotArena.DOWN;
 	}
 

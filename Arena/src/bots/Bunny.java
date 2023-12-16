@@ -14,18 +14,29 @@ public class Bunny extends Bot{
     private boolean overheat = false;
     private int sleep = (int)(Math.random()*5+1);
     private int moveCount = 99;
-    private int msgCounter = 0;
+    private int msgCounter = 2;
     private int move = BattleBotArena.STAY;
 
+    long seconds;
+    int[] closeBotLRUD = new int[4];
+    long lastTripleShot = System.currentTimeMillis()/1000;
+    double storedX = 1000;
+    double storedY = 1000;
+
+    double closeOverheatDistance;
+    boolean overheatSwitch = false;
+    
     BotInfo[] liveBots;
     BotInfo[] allyBots = new BotInfo[4];
-    BotInfo[] aliveEnemyBots = new BotInfo[16];
+    BotInfo[] aliveEnemyBots = new BotInfo[12];
     BotInfo[] deadBots;
     BotInfo me;
 
     private int playstyle = 0;
     private int countDown = 0;
     private int round = 0;
+    private String nextMessage = null;
+    boolean once = true;
 
     /**
      * Bot image
@@ -55,12 +66,21 @@ public class Bunny extends Bot{
         liveBots = alive;
         me = myself;
         deadBots = dead;
-        setEnemy();
-        // for overheating
-        //if (overheat){try{Thread.sleep(sleep);}catch (Exception e){}}
+        setEnemy(liveBots);
+        seconds = System.currentTimeMillis()/1000;
+        if (seconds < 10000){
+            return BattleBotArena.STAY;
+        }
 
+        
+        
+        if (--msgCounter == 0)
+		{
+			msgCounter = 10;
+            return BattleBotArena.SEND_MESSAGE;
+		}
 
-        switch(avoidTombstone(trackTombstone())){
+        switch(avoidTombstone(trackTombstone(deadBots))){
             case "up":
                 return BattleBotArena.RIGHT;
             case "left":
@@ -83,7 +103,7 @@ public class Bunny extends Bot{
         }
 
         if (--countDown <= 0 && shotOK){
-            countDown = 1;
+            countDown = 2;
             switch(shoot(trackClosestEnemy())){
                 case "up":
                     return BattleBotArena.FIREUP;
@@ -101,12 +121,14 @@ public class Bunny extends Bot{
     }
 
     // Lucas
-    public void setAlly(){
+    public void setAlly(BotInfo[] liveBots, BotInfo me){
         int allyNumber=0;
         for(int i = 0; i < liveBots.length; i++){
-            if(liveBots[i].getTeamName().equals(getTeamName())){
-                allyBots[allyNumber] = liveBots[i];
-                allyNumber++;
+            if(liveBots[i] != null){
+                if(liveBots[i].getTeamName().equals(getTeamName())){
+                    allyBots[allyNumber] = liveBots[i];
+                    allyNumber++;
+                }
             }
         }
 
@@ -119,12 +141,21 @@ public class Bunny extends Bot{
         }
     }
 
-    public void setEnemy(){
+    public void setEnemy(BotInfo[] liveBots){
         int enemyNumber=0;
         for(int i = 0; i < liveBots.length; i++){
-            if(!liveBots[i].getTeamName().equals(getTeamName())){
-                aliveEnemyBots[enemyNumber] = liveBots[i];
-                enemyNumber++;
+            if(liveBots[i] != null){
+                if(!liveBots[i].getTeamName().equals(getTeamName())){
+                    aliveEnemyBots[i] = null;
+                }
+            }
+        }
+        for(int i = 0; i < liveBots.length; i++){
+            if(liveBots[i] != null){
+                if(!liveBots[i].getTeamName().equals(getTeamName())){
+                    aliveEnemyBots[enemyNumber] = liveBots[i];
+                    enemyNumber++;
+                }
             }
         }
     }
@@ -135,6 +166,15 @@ public class Bunny extends Bot{
         for(int i=0; i < allyBots.length; i++)
         {
             System.out.println(allyBots[i]);
+        }
+    }
+
+    // Faraz
+    public void getEnemy()
+    {
+        for(int i=0; i < aliveEnemyBots.length; i++)
+        {
+            System.out.println(aliveEnemyBots[i]);
         }
     }
 
@@ -160,6 +200,7 @@ public class Bunny extends Bot{
         return "";
     }
 
+    //Lucas
     public String avoidBullets(Bullet bullet){
         if(bullet != null){
             double distanceX = bullet.getX() - me.getX();
@@ -167,25 +208,23 @@ public class Bunny extends Bot{
             switch(bulletDirection(bullet)){
                 case "right":
                     if(distanceX < 0){
-                        if(distanceY < 0)
+                        if(distanceY < 10)
                             return "down";
                         else
                             return "up";
-                        
                     }
                     break;
                 case "left":
                     if(distanceX > 0){
-                        if(distanceY < 0)
-                            return "down";
+                        if(distanceY < 10)
+                                return "down";
                         else
                             return "up";
-                        
                     }
                     break;
                 case "up":
                     if(distanceY > 0){
-                        if(distanceX < 0)
+                        if(distanceX < 10)
                             return "right";
                         else 
                             return "left";
@@ -193,7 +232,7 @@ public class Bunny extends Bot{
                     break;
                 case "down":
                     if(distanceY < 0){
-                        if(distanceX < 0)
+                        if(distanceX < 10)
                             return "right";
                         else
                             return "left";
@@ -203,6 +242,7 @@ public class Bunny extends Bot{
         return "";
     }
 
+    //Lucas
     public String bulletDirection(Bullet bullet){
         if(bullet.getXSpeed() > 0){
             return "right";
@@ -216,6 +256,7 @@ public class Bunny extends Bot{
         return "";
     }
 
+    //Lucas
     public String shoot(BotInfo target){
         double botSpeed = 1.5;
         double bulletSpeed = 4;
@@ -258,17 +299,18 @@ public class Bunny extends Bot{
         return "";
     }
 
+    //Lucas
     public String linedShot(BotInfo target, double x, double y){
         if(Math.abs(y) < 10){
-            if(x > 0 && Math.abs(x) < 10){
+            if(x > 0 && Math.abs(x) < 50){
                 return "instaright";
-            }else if(x < 0 && Math.abs(x) < 10){
+            }else if(x < 0 && Math.abs(x) < 50){
                 return "instaleft";
             }
         }else if(Math.abs(x) < 10){
-            if(y > 0 && y < 10){
+            if(y > 0 && Math.abs(y) < 50){
                 return "instadown";
-            }else if(y < 0 && Math.abs(y) < 10){
+            }else if(y < 0 && Math.abs(y) < 50){
                 return "instaup";
             }
         }
@@ -279,42 +321,48 @@ public class Bunny extends Bot{
                 }else if(y < 0 && Math.abs(y) < 400){
                     return "up";
                 }
+                break;
             case BattleBotArena.LEFT:
                 if(y > 0 && y <400){
                     return "down";
                 }else if(y < 0 && Math.abs(y) < 400){
                     return "up";
                 }
+                break;
             case BattleBotArena.UP:
                 if(x > 0 && x < 400){
                     return "right";
                 }else if(x < 0 && Math.abs(x) < 400){
                     return "left";
                 }
+                break;
             case BattleBotArena.DOWN:
                 if(x > 0 && x < 400){
                     return "right";
                 }else if(x < 0 && Math.abs(x) < 400){
                     return "left";
                 }
+                break;
             case BattleBotArena.STAY:
                 if(Math.abs(y) < 10){
-                    if(x > 0 && Math.abs(x) < 10){
+                    if(x > 0 && Math.abs(x) < 350){
                         return "instaright";
-                    }else if(x < 0 && Math.abs(x) < 10){
+                    }else if(x < 0 && Math.abs(x) < 350){
                         return "instaleft";
                     }
                 }else if(Math.abs(x) < 10){
-                    if(y > 0 && y < 10){
+                    if(y > 0 && y < 350){
                         return "instadown";
-                    }else if(y < 0 && Math.abs(y) < 10){
+                    }else if(y < 0 && Math.abs(y) < 350){
                         return "instaup";
                     }
                 }
+                break;
         }
         return "";
     }
 
+    //Lucas
     public String obstacle(){
         if(tombstoneInWay().equals("right") || allyInWay().equals("right"))
             return "right";
@@ -322,12 +370,13 @@ public class Bunny extends Bot{
             return "left";
         else if(tombstoneInWay().equals("down") || allyInWay().equals("down"))
             return "down";
-        else if(tombstoneInWay().equals("up+") || allyInWay().equals("up"))
+        else if(tombstoneInWay().equals("up") || allyInWay().equals("up"))
             return "up";
         else
             return "";
     }
 
+    //Lucas
     public BotInfo trackClosestEnemy(){
         BotInfo closestTarget = null;
         double distanceX;
@@ -348,6 +397,7 @@ public class Bunny extends Bot{
         return closestTarget;
     }
 
+    //Lucas
     public BotInfo trackLowestEnemy(){
         BotInfo lowestTarget = null;
         double lowestScore =1000;
@@ -362,7 +412,8 @@ public class Bunny extends Bot{
         return lowestTarget;
     }
 
-    public BotInfo trackTombstone(){
+    //Lucas
+    public BotInfo trackTombstone(BotInfo[] deadBots){
         BotInfo tombstone = null;
         double distanceX;
         double distanceY;
@@ -373,7 +424,7 @@ public class Bunny extends Bot{
                 distanceX = Math.abs(deadBots[i].getX() - me.getX());
                 distanceY = Math.abs(deadBots[i].getY() - me.getY());
                 hypotenuse = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-                if(hypotenuse < closestHypotenuse && hypotenuse < 40){
+                if(hypotenuse < closestHypotenuse && hypotenuse <= 30){
                     closestHypotenuse = hypotenuse;
                     tombstone = deadBots[i];
                 }
@@ -382,6 +433,7 @@ public class Bunny extends Bot{
         return tombstone;
     }
 
+    //Lucas
     public Bullet trackBullets(Bullet [] bullets){
         Bullet closestBullet = null;
         double distanceX;
@@ -402,6 +454,7 @@ public class Bunny extends Bot{
         return closestBullet;
     }
 
+    //Lucas
     public String allyInWay(){
         for(int i = 0; i < allyBots.length; i++ ){
             if(allyBots[i] != null){
@@ -423,16 +476,17 @@ public class Bunny extends Bot{
         return "";
     }
 
+    //Lucas
     public String tombstoneInWay(){
         for(int i = 0; i < deadBots.length; i++ ){
             if(deadBots[i] != null){
-                if(me.getX() <= deadBots[i].getX() + 1 && me.getX() > deadBots[i].getX() - 1){
+                if(me.getX() <= deadBots[i].getX() + 10 && me.getX() > deadBots[i].getX() - 10){
                     if(me.getX() > deadBots[i].getX()){
                         return "left";
                     }else{
                         return "right";
                     }
-                }else if(me.getY() <= deadBots[i].getY() + 1 && me.getY() <= deadBots[i].getY() - 1){
+                }else if(me.getY() <= deadBots[i].getY() + 10 && me.getY() <= deadBots[i].getY() - 10){
                     if(me.getY() > deadBots[i].getY()){
                         return "up";
                     }else{
@@ -449,10 +503,11 @@ public class Bunny extends Bot{
      */
     public void newRound()
     {
-        setAlly();
-        setEnemy();
+        setAlly(liveBots, me);
+        setEnemy(liveBots);
         round++;
         current = right;
+        
     }
 
     /**
@@ -460,7 +515,9 @@ public class Bunny extends Bot{
      */
     public String outgoingMessage()
     {
-        return null;
+        String msg = nextMessage;
+		nextMessage = null;
+		return msg;
     }
 
     /**
@@ -502,7 +559,14 @@ public class Bunny extends Bot{
      * This bot does not use incoming messages.
      */
     public void incomingMessage(int botNum, String msg){
-
+        if(botNum == BattleBotArena.SYSTEM_MSG && msg.matches("Round " + round + " starting. Good luck!")){
+            
+        }
+        if (botNum == BattleBotArena.SYSTEM_MSG && msg.matches(".*destroyed by "+getName()+".*")){
+			nextMessage = "Skill issue (≧◡≦)";
+            msgCounter = 10;
+		}
+        
     }
     /**
      * Image names
