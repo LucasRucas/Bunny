@@ -184,6 +184,8 @@ public class TestBunny {
     //     return "";
     // }
 // By Faraz
+
+
 	public static void main(String[] args){
 		TestBunny test = new TestBunny();
 
@@ -475,6 +477,27 @@ public class TestBunny {
         }
         else {
             System.out.println("staying still failed");
+        }
+    }
+
+    public static void testSendingMessages() {
+        // @author Yazan
+        BotInfo[] liveBots = new BotInfo[2];
+        Bullet[] bullets = new Bullet[0];
+        BotInfo[] deadBots = new BotInfo[1];
+        BotInfo me1 = new BotInfo(300, 200, 0, "bunny");
+        Bunny bunny1 = new Bunny();
+        me1.setTeamName(bunny1.getTeamName());
+        liveBots[0] = me1;
+        // Making an enemy bot above our bot so our bot gets an elimination, causing him to send a message
+        BotInfo enemy1 = new BotInfo(300, 220, 0, "enemy1");
+        liveBots[1] = enemy1;
+        if(bunny1.getMove(me1, true, liveBots, deadBots, bullets) == BattleBotArena.SEND_MESSAGE)
+        {
+            System.out.println("sending messages passed");
+        }
+        else {
+            System.out.println("sending messages failed");
         }
     }
 

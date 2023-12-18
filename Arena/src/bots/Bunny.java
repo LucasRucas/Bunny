@@ -22,12 +22,13 @@ public class Bunny extends Bot{
     long lastTripleShot = System.currentTimeMillis()/1000;
     double storedX = 1000;
     double storedY = 1000;
+    int counter = 0;
 
     double closeOverheatDistance;
     boolean overheatSwitch = false;
     
     BotInfo[] liveBots;
-    BotInfo[] allyBots = new BotInfo[4];
+    BotInfo[] aliveAllyBots = new BotInfo[4];
     BotInfo[] aliveEnemyBots = new BotInfo[12];
     BotInfo[] deadBots;
     BotInfo me;
@@ -66,21 +67,19 @@ public class Bunny extends Bot{
         liveBots = alive;
         me = myself;
         deadBots = dead;
-        setEnemy(liveBots);
+        setAlly(alive, myself);
+        setEnemy(alive);
         seconds = System.currentTimeMillis()/1000;
         if (seconds < 10000){
             return BattleBotArena.STAY;
         }
 
-        
-        
         if (--msgCounter == 0)
-		{
-			msgCounter = 10;
+        {
+            msgCounter = 10;
             return BattleBotArena.SEND_MESSAGE;
-		}
-
-        switch(avoidTombstone(trackTombstone(deadBots))){
+        }
+        switch(avoidTombstone(trackTombstone(dead))){
             case "up":
                 return BattleBotArena.RIGHT;
             case "left":
@@ -90,7 +89,7 @@ public class Bunny extends Bot{
             case "right":
                 return BattleBotArena.UP;
         }
-       
+    
         switch(avoidBullets(trackBullets(bullets))){
             case "up":
                 return BattleBotArena.UP;
@@ -113,20 +112,39 @@ public class Bunny extends Bot{
                     return BattleBotArena.FIRELEFT;
                 case "right":
                     return BattleBotArena.FIRERIGHT;
+                case "instaright":
+                    countDown = 60;
+                    return BattleBotArena.FIRERIGHT;
+                case "instaleft":
+                    countDown = 60;
+                    return BattleBotArena.FIRELEFT;
+                case "instadown":
+                    countDown = 60;
+                    return BattleBotArena.FIREDOWN;
+                case "instaup":
+                    countDown = 60;
+                    return BattleBotArena.FIREUP;
                 default:
             }
         }
-
+        
         return move;
     }
 
     // Lucas
     public void setAlly(BotInfo[] liveBots, BotInfo me){
         int allyNumber=0;
+        for(int i = 0; i < aliveAllyBots.length; i++){
+            if(aliveAllyBots[i] != null){
+                if(aliveAllyBots[i].getTeamName().equals(getTeamName())){
+                    aliveAllyBots[i] = null;
+                }
+            }
+        }
         for(int i = 0; i < liveBots.length; i++){
             if(liveBots[i] != null){
                 if(liveBots[i].getTeamName().equals(getTeamName())){
-                    allyBots[allyNumber] = liveBots[i];
+                    aliveAllyBots[allyNumber] = liveBots[i];
                     allyNumber++;
                 }
             }
@@ -135,17 +153,18 @@ public class Bunny extends Bot{
         // bot 0 and 2 will play for closest enemy
         // bot 1 and 3 will play for lowest score enemy
         for(int i = 0; i < 3; i++){
-            if(me.getBotNumber() > allyBots[i].getBotNumber()){
+            if(me.getBotNumber() > aliveAllyBots[i].getBotNumber()){
                 playstyle++;
             }
         }
     }
 
+    // Lucas
     public void setEnemy(BotInfo[] liveBots){
         int enemyNumber=0;
-        for(int i = 0; i < liveBots.length; i++){
-            if(liveBots[i] != null){
-                if(!liveBots[i].getTeamName().equals(getTeamName())){
+        for(int i = 0; i < aliveEnemyBots.length; i++){
+            if(aliveEnemyBots[i] != null){
+                if(!aliveEnemyBots[i].getTeamName().equals(getTeamName())){
                     aliveEnemyBots[i] = null;
                 }
             }
@@ -163,9 +182,9 @@ public class Bunny extends Bot{
     // Faraz
     public void getAlly()
     {
-        for(int i=0; i < allyBots.length; i++)
+        for(int i=0; i < aliveAllyBots.length; i++)
         {
-            System.out.println(allyBots[i]);
+            System.out.println(aliveAllyBots[i]);
         }
     }
 
@@ -265,36 +284,36 @@ public class Bunny extends Bot{
         switch(linedShot(target, distanceX, distanceY)){
             case "up":
                 if(Math.abs(distanceY) / bulletSpeed <= Math.abs(distanceX) / botSpeed + 0.5 && Math.abs(distanceY) / bulletSpeed > Math.abs(distanceX) / botSpeed - 0.5){
-                    if(!obstacle().equals("up"))
+                    if(!obstacle(distanceX, distanceY).equals("up"))
                         return "up";
                 }
                 break;
             case "down":
                 if(Math.abs(distanceY) / bulletSpeed <= Math.abs(distanceX) / botSpeed + 0.5 && Math.abs(distanceY) / bulletSpeed > Math.abs(distanceX) / botSpeed - 0.5){
-                    if(!obstacle().equals("down"))
+                    if(!obstacle(distanceX, distanceY).equals("down"))
                         return "down";
                 }
                 break;
             case "left":
                 if(Math.abs(distanceX) / bulletSpeed <= Math.abs(distanceY) / botSpeed + 0.5 && Math.abs(distanceX) / bulletSpeed > Math.abs(distanceY) / botSpeed - 0.5){
-                    if(!obstacle().equals("left"))
+                    if(!obstacle(distanceX, distanceY).equals("left"))
                         return "left";
                 }
                 break;
             case "right":
                 if(Math.abs(distanceX) / bulletSpeed <= Math.abs(distanceY) / botSpeed + 0.5 && Math.abs(distanceX) / bulletSpeed > Math.abs(distanceY) / botSpeed - 0.5){
-                    if(!obstacle().equals("right"))
+                    if(!obstacle(distanceX, distanceY).equals("right"))
                     return "right";
                 }
                 break;
             case "instaright":
-                return "right";
+                return "instaright";
             case "instaleft":
-                return "left";
+                return "instaleft";
             case "instadown":
-                return "down";
+                return "instadown";
             case "instaup":
-                return "up";
+                return "instaup";
         }
         return "";
     }
@@ -316,28 +335,40 @@ public class Bunny extends Bot{
         }
         switch(target.getLastMove()){
             case BattleBotArena.RIGHT:
-                if(y > 0 && y <400){
+                if(x < 0 && Math.abs(y) < 3){
+                    return "instaleft";
+                }
+                if(y > 0 && Math.abs(y) < 450){
                     return "down";
-                }else if(y < 0 && Math.abs(y) < 400){
+                }else if(y < 0 && Math.abs(y) < 450){
                     return "up";
                 }
                 break;
             case BattleBotArena.LEFT:
-                if(y > 0 && y <400){
+                if(x > 0 && Math.abs(y) < 3){
+                    return "instaright";
+                }
+                if(y > 0 && Math.abs(y) < 450){
                     return "down";
-                }else if(y < 0 && Math.abs(y) < 400){
+                }else if(y < 0 && Math.abs(y) < 450){
                     return "up";
                 }
                 break;
             case BattleBotArena.UP:
-                if(x > 0 && x < 400){
+                if(y > 0 && Math.abs(x) < 3){
+                    return "instadown";
+                }
+                if(x > 0 && Math.abs(x) < 400){
                     return "right";
                 }else if(x < 0 && Math.abs(x) < 400){
                     return "left";
                 }
                 break;
             case BattleBotArena.DOWN:
-                if(x > 0 && x < 400){
+                if(y < 0 && Math.abs(x) < 3){
+                    return "instaup";
+                }
+                if(x > 0 && Math.abs(x) < 400){
                     return "right";
                 }else if(x < 0 && Math.abs(x) < 400){
                     return "left";
@@ -345,15 +376,15 @@ public class Bunny extends Bot{
                 break;
             case BattleBotArena.STAY:
                 if(Math.abs(y) < 10){
-                    if(x > 0 && Math.abs(x) < 350){
+                    if(x > 0 && Math.abs(x) < 500){
                         return "instaright";
-                    }else if(x < 0 && Math.abs(x) < 350){
+                    }else if(x < 0 && Math.abs(x) < 500){
                         return "instaleft";
                     }
                 }else if(Math.abs(x) < 10){
-                    if(y > 0 && y < 350){
+                    if(y > 0 && y < 500){
                         return "instadown";
-                    }else if(y < 0 && Math.abs(y) < 350){
+                    }else if(y < 0 && Math.abs(y) < 500){
                         return "instaup";
                     }
                 }
@@ -363,17 +394,16 @@ public class Bunny extends Bot{
     }
 
     //Lucas
-    public String obstacle(){
-        if(tombstoneInWay().equals("right") || allyInWay().equals("right"))
+    public String obstacle(double x, double y){
+        if(tombstoneInWay().equals("right") && allyInWay().equals("right"))
             return "right";
-        else if(tombstoneInWay().equals("left") || allyInWay().equals("left"))
+        else if(tombstoneInWay().equals("left") && allyInWay().equals("left"))
             return "left";
-        else if(tombstoneInWay().equals("down") || allyInWay().equals("down"))
+        else if(tombstoneInWay().equals("down") && allyInWay().equals("down"))
             return "down";
-        else if(tombstoneInWay().equals("up") || allyInWay().equals("up"))
+        else if(tombstoneInWay().equals("up") && allyInWay().equals("up"))
             return "up";
-        else
-            return "";
+        return "";
     }
 
     //Lucas
@@ -456,16 +486,18 @@ public class Bunny extends Bot{
 
     //Lucas
     public String allyInWay(){
-        for(int i = 0; i < allyBots.length; i++ ){
-            if(allyBots[i] != null){
-                if(me.getX() <= allyBots[i].getX() + 1 && me.getX() > allyBots[i].getX() - 1){
-                    if(me.getX() > allyBots[i].getX()){
+        double obstacleDX;
+        double obstacleDY;
+        for(int i = 0; i < aliveAllyBots.length; i++ ){
+            if(aliveAllyBots[i] != null){
+                if(me.getX() <= aliveAllyBots[i].getX() + 1 && me.getX() > aliveAllyBots[i].getX() - 1){
+                    if(me.getX() > aliveAllyBots[i].getX()){
                         return "left";
                     }else{
                         return "right";
                     }
-                }else if(me.getY() <= allyBots[i].getY() + 1 && me.getY() <= allyBots[i].getY() - 1){
-                    if(me.getY() > allyBots[i].getY()){
+                }else if(me.getY() <= aliveAllyBots[i].getY() + 1 && me.getY() <= aliveAllyBots[i].getY() - 1){
+                    if(me.getY() > aliveAllyBots[i].getY()){
                         return "up";
                     }else{
                         return "down";
