@@ -37,7 +37,7 @@ public class Bunny extends Bot{
     private int countDown = 0;
     private int round = 0;
     private String nextMessage = null;
-    boolean once = true;
+    private boolean once = true;
 
     /**
      * Bot image
@@ -150,12 +150,17 @@ public class Bunny extends Bot{
             }
         }
 
-        // bot 0 and 2 will play for closest enemy
-        // bot 1 and 3 will play for lowest score enemy
-        for(int i = 0; i < 3; i++){
-            if(me.getBotNumber() > aliveAllyBots[i].getBotNumber()){
-                playstyle++;
+        if(once){
+            // bot 0 and 2 will play for closest enemy
+            // bot 1 and 3 will play for lowest score enemy
+            for(int i = 0; i < aliveAllyBots.length; i++){
+                if(aliveAllyBots[i] != null){
+                    if(me.getBotNumber() > aliveAllyBots[i].getBotNumber()){
+                        playstyle++;
+                    }
+                }
             }
+            once = false;
         }
     }
 
@@ -486,8 +491,6 @@ public class Bunny extends Bot{
 
     //Lucas
     public String allyInWay(){
-        double obstacleDX;
-        double obstacleDY;
         for(int i = 0; i < aliveAllyBots.length; i++ ){
             if(aliveAllyBots[i] != null){
                 if(me.getX() <= aliveAllyBots[i].getX() + 1 && me.getX() > aliveAllyBots[i].getX() - 1){
@@ -538,6 +541,7 @@ public class Bunny extends Bot{
         setAlly(liveBots, me);
         setEnemy(liveBots);
         round++;
+        once = true;
         current = right;
         
     }
